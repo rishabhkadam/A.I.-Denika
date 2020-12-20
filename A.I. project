@@ -1,0 +1,130 @@
+import pyttsx3
+import datetime
+import speech_recognition as sr
+import wikipedia
+import webbrowser
+import os
+import smtplib
+import random
+import pywhatkit
+import requests
+import json
+
+def speak(audio):
+    engine.say(audio)
+    engine.runAndWait()
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+engine.setProperty('voice',voices[1].id)
+
+def TakeCommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...")
+        r.pause_threshold = 1
+        audio = r.listen(source)
+    try:
+        print("Recognition...")
+        query = r.recognize_google(audio,language='en-in')
+        print(f"User Said : {query}\n")
+
+    except Exception as e:
+        print(e)
+        print("Say that again Please...")
+        return "None"
+    return query
+
+def wishme():
+    hour =int(datetime.datetime.now().hour)
+
+    if hour >= 0 and hour < 12:
+        speak("Good morning, sir.")
+
+    elif hour >= 12 and hour < 18:
+        speak("Good After sir.")
+
+    else:
+        speak("Good Night sir.")
+
+def SendEmail(to, content):
+    server = smtplib.SMTP('smtp.gmail.com',587)
+    server.ehlo()
+    server.starttls()
+    server.login('write your email','wirte your email password')
+    server.sendmail('rishabh.kadam20@gmail.com',to,content)
+    server.close()
+
+
+if __name__ == "__main__":
+    speak("hello")
+    wishme()
+
+    while True:
+        query = TakeCommand().lower()
+
+        if 'wikipedia' in query:
+            speak("i am Searching.....sir Please wait")
+            query = query.replace("wikipedia", "")
+            results = wikipedia.summary(query, sentences = 2)
+            speak("According to wikipedia")
+            print(results)
+            speak(results)
+
+        elif 'open youtube' in query:
+            webbrowser.open("youtube.com")
+
+        elif 'open google' in query:
+            webbrowser.open("www.google.com")
+
+        elif 'play music' in query:
+            music_dir = 'F:\MUSIC'
+            songs = os.listdir(music_dir)
+            print(songs)
+            os.startfile(os.path.join(music_dir, songs[random.randint(0,205)]))
+
+        elif 'the time' in query:
+            strTime = datetime.datetime.now().strftime("%I:%M:%p")
+            print(strTime)
+            speak(f"Sir, the time is {strTime}")
+
+
+        elif 'email to rishabh' in query:
+            try:
+                speak("what should i say?")
+                content = TakeCommand()
+                to = 'rishabh.kadam.mit@gmail.com'
+                SendEmail(to,content)
+                speak("Email has been sent!")
+            except Exception as e:
+                print(e)
+                speak("Sorry boss i am not able to send this email.")
+
+        elif 'quit' and 'quiet' in query:
+            speak("ok sir have a nice day")
+            print("ok sir have a nice day")
+            quit(query)
+
+        elif 'on youtube' in query:
+            query = query.replace("on youtube", "")
+            pywhatkit.playonyt(query)
+
+        elif 'news' in query:
+            url = "http://newsapi.org/v2/top-headlines?country=in&apiKey=f56a19b5aa06415794f460592540cfda"
+            news = requests.get(url).text
+            news_dict = json.loads(news)
+            i = 1
+
+            for i in range(0, 11):
+                print(f"{i} : {news_dict['articles'][i]['title']}")
+                speak(f"{i} : {news_dict['articles'][i]['title']}")
+
+        elif 'weather' in query:
+            apikey = "http://api.openweathermap.org/data/2.5/weather?appid=904d7a74e12b31e388b9f2a67c1c1617&q=Mumbai"
+            weather = requests.get(apikey).text
+            wther = json.loads(weather)
+            w = wther["main"]
+            temp = w['temp'] - 273.15
+            print('temperature is : ''%.2f' % temp)
+            speak('temperature is : ''%.2f' % temp)
+            
